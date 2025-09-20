@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "close": "✕",
+    "select": "Select",
+    "location": "Location",
+    "soilData": "Soil Data",
+    "weather": "Weather",
+    "crop": "Crop",
+    "notAvailable": "Not available",
+    "unknown": "Unknown",
+    "justNow": "Just now",
+    "lastUpdated": "Last Updated",
+    "dataSource": "Data Source",
+    "iot": "📡 IoT",
+    "network": "🌐 Net"
+  },
+  "languageSelector": {
+    "title": "Select Your Language",
+    "subtitle": "Choose your preferred language for the app",
+    "continue": "Continue"
+  },
+  "mainScreen": {
+    "location": "Location",
+    "soilData": "Soil Data",
+    "crop": "Crop",
+    "weather": "Weather",
+    "detailedStats": "Detailed Statistics",
+    "locationDetails": "📍 Location Details",
+    "soilAnalysis": "🌱 Soil Analysis",
+    "weatherConditions": "🌤️ Weather Conditions",
+    "cropInformation": "🌾 Crop Information"
+  },
+  "tiles": {
+    "cropRecommendation": {
+      "title": "Crop Recommendation",
+      "description": "Get the best crop for your soil"
+    },
+    "yieldPrediction": {
+      "title": "Yield prediction",
+      "description": "Predict the yield of your crop"
+    },
+    "marketPricing": {
+      "title": "Market Pricing",
+      "description": "Get the best price for your crop"
+    },
+    "diseasePrediction": {
+      "title": "Disease Prediction",
+      "description": "Predict the disease of your crop"
+    }
+  },
+  "bottomBoxes": {
+    "language": "Language",
+    "linkIoT": "Link IoT Device",
+    "helpSupport": "Help & Support"
+  },
+  "soilData": {
+    "type": "Type",
+    "moisture": "Moisture",
+    "nutrients": "Nutrients",
+    "phLevel": "pH Level",
+    "nitrogen": "Nitrogen",
+    "phosphorus": "Phosphorus",
+    "potassium": "Potassium",
+    "optimal": "Optimal",
+    "ppm": "ppm"
+  },
+  "weatherData": {
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "condition": "Condition",
+    "windSpeed": "Wind Speed",
+    "pressure": "Pressure",
+    "kmh": "km/h",
+    "hPa": "hPa"
+  },
+  "cropData": {
+    "selectedCrop": "Selected Crop",
+    "plantingDate": "Planting Date",
+    "expectedHarvest": "Expected Harvest",
+    "growthStage": "Growth Stage",
+    "notSet": "Not set",
+    "notApplicable": "Not applicable"
+  },
+  "errors": {
+    "permissionDenied": "Permission denied",
+    "locationRequired": "Location permission is required for this app",
+    "locationError": "Failed to get location",
+    "error": "Error"
+  }
+}
