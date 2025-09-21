@@ -33,11 +33,8 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
                 <Text style={styles.tileDetailDescription}>{t(selectedTile.descriptionKey)}</Text>
                 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Features</Text>
-                  <Text style={styles.detailText}>• Comprehensive information</Text>
-                  <Text style={styles.detailText}>• Easy to use interface</Text>
-                  <Text style={styles.detailText}>• Real-time updates</Text>
-                  <Text style={styles.detailText}>• Offline support</Text>
+                  <Text style={styles.detailSectionTitle}>Coming Soon</Text>
+                  <Text style={styles.detailText}>Coming Soon</Text>
                 </View>
               </>
             )}

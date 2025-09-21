@@ -7,6 +7,7 @@ import TileGrid from './TileGrid';
 import BottomBoxes from './BottomBoxes';
 import MainDetailsModal from './MainDetailsModal';
 import TileDetailsModal from './TileDetailsModal';
+import LanguageSelector from './LanguageSelector';
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -16,6 +17,7 @@ const MainScreen = () => {
   const [cropData, setCropData] = useState('---');
   const [showMainDetails, setShowMainDetails] = useState(false);
   const [showTileDetails, setShowTileDetails] = useState(null);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -60,11 +62,20 @@ const MainScreen = () => {
     setShowTileDetails(tileId);
   };
 
+  const handleLanguageSelect = (languageCode) => {
+    // Language change is handled by the LanguageSelector component
+    console.log('Language selected:', languageCode);
+  };
+
+  const handleLanguageSelectorClose = () => {
+    setShowLanguageSelector(false);
+  };
+
   const handleBottomBoxPress = (boxId) => {
     // Handle bottom box press based on boxId
     switch (boxId) {
       case 1: // Language
-        // This will be handled by the parent component
+        setShowLanguageSelector(true);
         break;
       case 2: // Link IoT Device
         Alert.alert('IoT Device', 'IoT device linking functionality will be implemented here');
@@ -107,6 +118,12 @@ const MainScreen = () => {
         visible={showTileDetails !== null}
         onClose={() => setShowTileDetails(null)}
         selectedTileId={showTileDetails}
+      />
+
+      <LanguageSelector
+        visible={showLanguageSelector}
+        onLanguageSelect={handleLanguageSelect}
+        onContinue={handleLanguageSelectorClose}
       />
     </View>
   );

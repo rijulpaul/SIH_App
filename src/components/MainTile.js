@@ -73,7 +73,7 @@ const MainTile = ({
 
 const styles = StyleSheet.create({
   mainBlock: {
-    height: 200, // Fixed height instead of percentage
+    height: 250, // Fixed height instead of percentage
     backgroundColor: '#ffffff',
     margin: 15,
     marginTop: 40,
