@@ -23,7 +23,7 @@ class DataService {
       const address = addressResponse[0];
       const locationString = `${address.city || address.district || 'Unknown'}, ${address.region || address.country || 'Unknown'}`;
       
-      await this.saveLocation(locationString);
+      await this.saveLocation(locationString, latitude, longitude);
       return locationString;
     } catch (error) {
       console.error('Error getting location:', error);
@@ -31,9 +31,15 @@ class DataService {
     }
   }
 
-  async saveLocation(location) {
+  async saveLocation(location, latitude = null, longitude = null) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.USER_LOCATION, location);
+      if (latitude !== null) {
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_LATITUDE, latitude.toString());
+      }
+      if (longitude !== null) {
+        await AsyncStorage.setItem(STORAGE_KEYS.USER_LONGITUDE, longitude.toString());
+      }
     } catch (error) {
       console.error('Error saving location:', error);
     }
@@ -46,6 +52,39 @@ class DataService {
     } catch (error) {
       console.error('Error getting location from storage:', error);
       return null;
+    }
+  }
+
+  async getLatitude() {
+    try {
+      const latitude = await AsyncStorage.getItem(STORAGE_KEYS.USER_LATITUDE);
+      return latitude ? parseFloat(latitude) : null;
+    } catch (error) {
+      console.error('Error getting latitude from storage:', error);
+      return null;
+    }
+  }
+
+  async getLongitude() {
+    try {
+      const longitude = await AsyncStorage.getItem(STORAGE_KEYS.USER_LONGITUDE);
+      return longitude ? parseFloat(longitude) : null;
+    } catch (error) {
+      console.error('Error getting longitude from storage:', error);
+      return null;
+    }
+  }
+
+  async clearLocationData() {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEYS.USER_LOCATION),
+        AsyncStorage.removeItem(STORAGE_KEYS.USER_LATITUDE),
+        AsyncStorage.removeItem(STORAGE_KEYS.USER_LONGITUDE)
+      ]);
+      console.log('Location data cleared from storage');
+    } catch (error) {
+      console.error('Error clearing location data:', error);
     }
   }
 
@@ -122,6 +161,112 @@ class DataService {
       await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_LANGUAGE, language);
     } catch (error) {
       console.error('Error saving selected language:', error);
+    }
+  }
+
+  // Yield prediction methods
+  async getYieldPrediction(cropType = null, area = null, temperature = null) {
+    try {
+      // Get current data from storage if parameters not provided
+      const [currentCrop, weatherData, latitude, longitude] = await Promise.all([
+        cropType ? Promise.resolve(cropType) : this.getCropData(),
+        temperature !== null ? Promise.resolve({ temperature: temperature }) : this.getWeatherData(),
+        this.getLatitude(),
+        this.getLongitude()
+      ]);
+
+      // Use provided parameters or fallback to stored/default values
+      const finalCrop = currentCrop && currentCrop !== '---' ? currentCrop : 'rice';
+      const finalArea = area || 2; // Default area
+      const finalTemperature = temperature !== null ? temperature : 
+        (weatherData.temperature && weatherData.temperature !== '---' ? 
+         parseFloat(weatherData.temperature) : 2.1);
+
+      // Make API call with location parameters
+      const apiUrl = `http://10.222.27.14:8000/cropyield?crop=${finalCrop}&area=${finalArea}&lat=${latitude || 0}&lon=${longitude || 0}`;
+      
+      console.log('Making API call to Yield Prediction AI:', apiUrl);
+      console.log('Parameters:', { crop: finalCrop, area: finalArea, temperature: finalTemperature, lat: latitude, lon: longitude });
+      console.log('Starting fetch request...');
+      
+      // Make the API call
+      console.log('Attempting to fetch from:', apiUrl);
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+      
+      console.log('Response received:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Validate the response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format from API');
+      }
+
+      // Log successful API response
+      console.log('Successfully fetched yield prediction from abc.com:', data);
+      
+      // Return the data as received from abc.com
+      return data;
+    } catch (error) {
+      console.error('Error getting yield prediction from abc.com:', error);
+      
+      // Determine error type for better user feedback
+      let errorMessage = 'API request failed';
+      if (error.message.includes('timeout')) {
+        errorMessage = 'Request timeout - please check your internet connection';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Network error - please check your internet connection';
+      } else if (error.message.includes('404')) {
+        errorMessage = 'API endpoint not found';
+      } else if (error.message.includes('500')) {
+        errorMessage = 'Server error - please try again later';
+      }
+      
+      console.log('Falling back to mock data due to API error:', errorMessage);
+      
+      // Fallback to mock data if API fails
+      const mockYieldData = {
+        crop: finalCrop,
+        area_ha: finalArea,
+        temperature_c_used: finalTemperature,
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        fertilizer_per_ha_range: [111.84, 142.35],
+        pesticide_per_ha_range: [0.451, 0.574],
+        yield_per_ha_range: [3.175, 4.04],
+        total_fertilizer_range: [223.69, 284.69],
+        total_pesticide_range: [0.902, 1.148],
+        total_yield_range: [6.349, 8.081],
+        message: `Yield prediction for ${finalCrop} on ${finalArea} hectares at ${finalTemperature}°C (Offline Mode)`,
+        isOfflineData: true,
+        errorMessage: errorMessage
+      };
+      
+      return mockYieldData;
+    }
+  }
+
+  // Test API connection
+  async testApiConnection() {
+    try {
+      const response = await fetch('https://abc.com/api/health', {
+        method: 'GET',
+        timeout: 5000,
+      });
+      return response.ok;
+    } catch (error) {
+      console.log('API connection test failed:', error);
+      return false;
     }
   }
 

@@ -21,6 +21,8 @@ export const BOTTOM_BOXES = [
 
 export const STORAGE_KEYS = {
   USER_LOCATION: 'userLocation',
+  USER_LATITUDE: 'userLatitude',
+  USER_LONGITUDE: 'userLongitude',
   SELECTED_LANGUAGE: 'selectedLanguage',
   SOIL_DATA: 'soilData',
   WEATHER_DATA: 'weatherData',
