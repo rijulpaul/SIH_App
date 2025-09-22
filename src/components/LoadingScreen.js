@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Animated, StatusBar, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 const LoadingScreen = () => {
@@ -33,7 +33,11 @@ const LoadingScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor="#1e8a3a" />
       <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
         <View style={styles.logoPlaceholder}>
-          <Text style={styles.logoText}>LOGO</Text>
+          <Image
+            source={require('../../assets/logo.jpg')}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
         </View>
       </Animated.View>
       <Text style={styles.loadingText}>{t('common.loading')}</Text>
@@ -52,10 +56,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   logoPlaceholder: {
-    width: 120,
-    height: 120,
+    width: 220,
+    height: 220,
     backgroundColor: '#E7FFC7',
-    borderRadius: 20,
+    borderRadius: 110,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -66,6 +70,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '125%',
+    height: '125%',
+    borderRadius: 60,
   },
   logoText: {
     fontSize: 18,
