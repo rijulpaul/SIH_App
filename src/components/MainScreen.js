@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, StatusBar, Alert } from 'react-native';
+import { View, StyleSheet, StatusBar, Alert, Text, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import dataService from '../services/dataService';
 import MainTile from './MainTile';
@@ -18,6 +18,8 @@ const MainScreen = () => {
   const [showMainDetails, setShowMainDetails] = useState(false);
   const [showTileDetails, setShowTileDetails] = useState(null);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [showIoTModal, setShowIoTModal] = useState(false);
+  const [iotUrl, setIotUrl] = useState('');
 
   useEffect(() => {
     loadData();
@@ -95,6 +97,10 @@ const MainScreen = () => {
     setShowLanguageSelector(false);
   };
 
+  const handleIotSubmit = () => {
+    Alert.alert('Invalid link');
+  };
+
   const handleBottomBoxPress = (boxId) => {
     // Handle bottom box press based on boxId
     switch (boxId) {
@@ -102,7 +108,7 @@ const MainScreen = () => {
         setShowLanguageSelector(true);
         break;
       case 2: // Link IoT Device
-        Alert.alert('IoT Device', 'IoT device linking functionality will be implemented here');
+        setShowIoTModal(true);
         break;
       case 3: // Help & Support
         Alert.alert('Help & Support', 'Help and support functionality will be implemented here');
@@ -149,6 +155,38 @@ const MainScreen = () => {
         onLanguageSelect={handleLanguageSelect}
         onContinue={handleLanguageSelectorClose}
       />
+
+      {/* IoT URL Input Modal */}
+      <Modal
+        visible={showIoTModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowIoTModal(false)}
+      >
+        <View style={styles.iotOverlay}>
+          <View style={styles.iotContainer}>
+            <Text style={styles.iotTitle}>Link IoT Sensor</Text>
+            <Text style={styles.iotSubtitle}>Enter your IoT endpoint URL to pull data from your sensor.</Text>
+            <TextInput
+              style={styles.iotInput}
+              value={iotUrl}
+              onChangeText={setIotUrl}
+              placeholder="https://api.thingspeak.com/channels/{id}/feeds.json?api_key={KEY}&results=1"
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={styles.iotActions}>
+              <TouchableOpacity style={styles.iotCancelButton} onPress={() => setShowIoTModal(false)}>
+                <Text style={styles.iotCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iotSubmitButton} onPress={handleIotSubmit}>
+                <Text style={styles.iotSubmitText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -157,6 +195,68 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#E7FFC7',
+  },
+  iotOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  iotContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 420,
+  },
+  iotTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e8a3a',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  iotSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  iotInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#111827',
+    backgroundColor: '#ffffff',
+  },
+  iotActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 16,
+  },
+  iotCancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    marginRight: 10,
+  },
+  iotCancelText: {
+    color: '#374151',
+    fontWeight: '600',
+  },
+  iotSubmitButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#1e8a3a',
+  },
+  iotSubmitText: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
 });
 
