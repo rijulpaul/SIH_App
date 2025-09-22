@@ -50,12 +50,28 @@ const MainTile = ({
         </View>
         <View style={styles.weatherSection}>
           <Text style={styles.sectionTitle}>{t('mainScreen.weather')}</Text>
-          <Text style={styles.dataText}>{weatherData.temperature}</Text>
-          <Text style={styles.dataText}>{weatherData.humidity}</Text>
-          <Text style={styles.dataText}>{weatherData.condition}</Text>
+          <Text style={styles.dataText}>
+            🌡️ {weatherData.temperature}°C
+          </Text>
+          <Text style={styles.dataText}>
+            💧 {weatherData.humidity}%
+          </Text>
+          <Text style={styles.dataText}>
+            🌤️ {weatherData.condition}
+          </Text>
+          {weatherData.windSpeed && (
+            <Text style={styles.dataText}>
+              💨 {weatherData.windSpeed} km/h
+            </Text>
+          )}
           <Text style={styles.dataSource}>
             {weatherData.isIoT ? t('common.iot') : t('common.network')}
           </Text>
+          {weatherData.lastUpdated && (
+            <Text style={styles.lastUpdated}>
+              {t('common.lastUpdated')}: {new Date(weatherData.lastUpdated).toLocaleTimeString()}
+            </Text>
+          )}
         </View>
       </View>
       
@@ -126,6 +142,12 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontStyle: 'italic',
     marginTop: 5,
+  },
+  lastUpdated: {
+    fontSize: 9,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    marginTop: 3,
   },
   refreshButton: {
     position: 'absolute',

@@ -118,6 +118,80 @@ class DataService {
     }
   }
 
+  async fetchCurrentWeather() {
+    try {
+      // Get current location coordinates
+      const [latitude, longitude] = await Promise.all([
+        this.getLatitude(),
+        this.getLongitude()
+      ]);
+
+      if (!latitude || !longitude) {
+        console.log('No location data available for weather fetch');
+        return DEFAULT_DATA.weather;
+      }
+
+      console.log('Fetching weather data for coordinates:', { latitude, longitude });
+
+      // Construct Open-Meteo API URL
+      const weatherApiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,cloud_cover,precipitation,rain`;
+      
+      console.log('Weather API URL:', weatherApiUrl);
+
+      const response = await fetch(weatherApiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Weather API request failed with status: ${response.status}`);
+      }
+
+      const weatherData = await response.json();
+      console.log('Weather data received:', weatherData);
+
+      // Transform API response to our format
+      const transformedWeather = {
+        temperature: weatherData.current.temperature_2m.toFixed(1),
+        humidity: weatherData.current.relative_humidity_2m.toFixed(0),
+        condition: this.getWeatherCondition(weatherData.current.cloud_cover, weatherData.current.precipitation),
+        windSpeed: weatherData.current.wind_speed_10m.toFixed(1),
+        cloudCover: weatherData.current.cloud_cover.toFixed(0),
+        precipitation: weatherData.current.precipitation.toFixed(1),
+        rain: weatherData.current.rain.toFixed(1),
+        isIoT: false, // This is real-time data, not IoT
+        lastUpdated: new Date().toISOString(),
+        timezone: weatherData.timezone,
+        elevation: weatherData.elevation,
+        rawData: weatherData // Store full response for debugging
+      };
+
+      // Save to storage
+      await this.saveWeatherData(transformedWeather);
+      
+      return transformedWeather;
+    } catch (error) {
+      console.error('Error fetching weather data:', error);
+      // Return cached data if available, otherwise default
+      const cachedWeather = await this.getWeatherData();
+      return cachedWeather;
+    }
+  }
+
+  getWeatherCondition(cloudCover, precipitation) {
+    if (precipitation > 0) {
+      return 'Rainy';
+    } else if (cloudCover >= 80) {
+      return 'Cloudy';
+    } else if (cloudCover >= 40) {
+      return 'Partly Cloudy';
+    } else {
+      return 'Clear';
+    }
+  }
+
   async saveWeatherData(weatherData) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.WEATHER_DATA, JSON.stringify(weatherData));
@@ -274,10 +348,12 @@ class DataService {
   async refreshAllData() {
     try {
       const location = await this.getCurrentLocation();
-      // Here you would typically fetch fresh soil and weather data from APIs
-      // For now, we'll just return the current data
+      
+      // Fetch fresh weather data from Open-Meteo API
+      const weatherData = await this.fetchCurrentWeather();
+      
+      // Get other data from storage
       const soilData = await this.getSoilData();
-      const weatherData = await this.getWeatherData();
       const cropData = await this.getCropData();
       
       return {

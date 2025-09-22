@@ -50,12 +50,48 @@ const MainDetailsModal = ({
 
             <View style={styles.detailSection}>
               <Text style={styles.detailSectionTitle}>{t('mainScreen.weatherConditions')}</Text>
-              <Text style={styles.detailText}>{t('weatherData.temperature')}: {weatherData.temperature}</Text>
-              <Text style={styles.detailText}>{t('weatherData.humidity')}: {weatherData.humidity}</Text>
-              <Text style={styles.detailText}>{t('weatherData.condition')}: {weatherData.condition}</Text>
-              <Text style={styles.detailText}>{t('weatherData.windSpeed')}: 12 {t('weatherData.kmh')}</Text>
-              <Text style={styles.detailText}>{t('weatherData.pressure')}: 1013 {t('weatherData.hPa')}</Text>
-              <Text style={styles.detailText}>{t('common.dataSource')}: Weather API</Text>
+              <Text style={styles.detailText}>
+                🌡️ {t('weatherData.temperature')}: {weatherData.temperature}°C
+              </Text>
+              <Text style={styles.detailText}>
+                💧 {t('weatherData.humidity')}: {weatherData.humidity}%
+              </Text>
+              <Text style={styles.detailText}>
+                🌤️ {t('weatherData.condition')}: {weatherData.condition}
+              </Text>
+              {weatherData.windSpeed && (
+                <Text style={styles.detailText}>
+                  💨 {t('weatherData.windSpeed')}: {weatherData.windSpeed} {t('weatherData.kmh')}
+                </Text>
+              )}
+              {weatherData.cloudCover && (
+                <Text style={styles.detailText}>
+                  ☁️ Cloud Cover: {weatherData.cloudCover}%
+                </Text>
+              )}
+              {weatherData.precipitation !== undefined && (
+                <Text style={styles.detailText}>
+                  🌧️ Precipitation: {weatherData.precipitation} mm
+                </Text>
+              )}
+              {weatherData.timezone && (
+                <Text style={styles.detailText}>
+                  🌍 Timezone: {weatherData.timezone}
+                </Text>
+              )}
+              {weatherData.elevation && (
+                <Text style={styles.detailText}>
+                  ⛰️ Elevation: {weatherData.elevation}m
+                </Text>
+              )}
+              <Text style={styles.detailText}>
+                {t('common.dataSource')}: Open-Meteo API
+              </Text>
+              {weatherData.lastUpdated && (
+                <Text style={styles.detailText}>
+                  {t('common.lastUpdated')}: {new Date(weatherData.lastUpdated).toLocaleString()}
+                </Text>
+              )}
             </View>
 
             <View style={styles.detailSection}>

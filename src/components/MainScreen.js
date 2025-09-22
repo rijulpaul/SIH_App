@@ -25,16 +25,16 @@ const MainScreen = () => {
 
   const loadData = async () => {
     try {
-      const [locationData, soilDataFromStorage, weatherDataFromStorage, cropDataFromStorage] = await Promise.all([
+      const [locationData, soilDataFromStorage, weatherDataFromAPI, cropDataFromStorage] = await Promise.all([
         dataService.getLocation(),
         dataService.getSoilData(),
-        dataService.getWeatherData(),
+        dataService.fetchCurrentWeather(), // Fetch fresh weather data
         dataService.getCropData(),
       ]);
 
       setLocation(locationData);
       setSoilData(soilDataFromStorage);
-      setWeatherData(weatherDataFromStorage);
+      setWeatherData(weatherDataFromAPI);
       setCropData(cropDataFromStorage);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -50,6 +50,18 @@ const MainScreen = () => {
       setCropData(refreshedData.cropData);
     } catch (error) {
       console.error('Error refreshing data:', error);
+      throw error;
+    }
+  };
+
+  const handleWeatherRefresh = async () => {
+    try {
+      console.log('Refreshing weather data...');
+      const freshWeatherData = await dataService.fetchCurrentWeather();
+      setWeatherData(freshWeatherData);
+      console.log('Weather data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing weather data:', error);
       throw error;
     }
   };
