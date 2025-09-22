@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    height: height * 0.125,
+    height: height * 0.115,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tileTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#374151',
     marginBottom: 4,

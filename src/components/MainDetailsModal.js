@@ -39,13 +39,45 @@ const MainDetailsModal = ({
 
             <View style={styles.detailSection}>
               <Text style={styles.detailSectionTitle}>{t('mainScreen.soilAnalysis')}</Text>
-              <Text style={styles.detailText}>{t('soilData.type')}: {soilData.type}</Text>
-              <Text style={styles.detailText}>{t('soilData.moisture')}: {soilData.moisture}</Text>
-              <Text style={styles.detailText}>{t('soilData.phLevel')}: 6.8 ({t('soilData.optimal')})</Text>
-              <Text style={styles.detailText}>{t('soilData.nitrogen')}: 45 {t('soilData.ppm')}</Text>
-              <Text style={styles.detailText}>{t('soilData.phosphorus')}: 32 {t('soilData.ppm')}</Text>
-              <Text style={styles.detailText}>{t('soilData.potassium')}: 28 {t('soilData.ppm')}</Text>
-              <Text style={styles.detailText}>{t('common.dataSource')}: IoT Sensor</Text>
+              <Text style={styles.detailText}>
+                🌱 {t('soilData.type')}: {soilData.type}
+              </Text>
+              <Text style={styles.detailText}>
+                💧 {t('soilData.moisture')}: {soilData.moisture}
+              </Text>
+              {soilData.phLevel && soilData.phLevel !== '---' && (
+                <Text style={styles.detailText}>
+                  🧪 {t('soilData.phLevel')}: {soilData.phLevel}
+                </Text>
+              )}
+              {soilData.nitrogen && soilData.nitrogen !== '---' && (
+                <Text style={styles.detailText}>
+                  🧬 Nitrogen: {soilData.nitrogen}
+                </Text>
+              )}
+              {soilData.organicCarbon && soilData.organicCarbon !== '---' && (
+                <Text style={styles.detailText}>
+                  🌿 Organic Carbon: {soilData.organicCarbon}
+                </Text>
+              )}
+              {soilData.waterContent && soilData.waterContent !== '---' && (
+                <Text style={styles.detailText}>
+                  💧 Water Content: {soilData.waterContent}
+                </Text>
+              )}
+              {soilData.coordinates && (
+                <Text style={styles.detailText}>
+                  📍 Coordinates: {soilData.coordinates[1].toFixed(4)}, {soilData.coordinates[0].toFixed(4)}
+                </Text>
+              )}
+              <Text style={styles.detailText}>
+                {t('common.dataSource')}: Soil API
+              </Text>
+              {soilData.lastUpdated && (
+                <Text style={styles.detailText}>
+                  {t('common.lastUpdated')}: {new Date(soilData.lastUpdated).toLocaleString()}
+                </Text>
+              )}
             </View>
 
             <View style={styles.detailSection}>
@@ -149,7 +181,7 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     padding: 20,
-    paddingTop: 50,
+    marginBottom: 20
   },
   modalTitle: {
     fontSize: 24,

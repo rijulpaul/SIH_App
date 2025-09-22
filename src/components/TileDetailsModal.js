@@ -7,6 +7,7 @@ import dataService from '../services/dataService';
 const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
   const { t } = useTranslation();
   const [yieldData, setYieldData] = useState(null);
+  const [cropRecommendationData, setCropRecommendationData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cropInput, setCropInput] = useState('');
   const [areaInput, setAreaInput] = useState('');
@@ -15,17 +16,75 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
   const selectedTile = selectedTileId ? TILE_DATA.find(tile => tile.id === selectedTileId) : null;
 
   useEffect(() => {
-    if (visible && selectedTileId === 2) { // Yield Prediction tile
+    if (visible && selectedTileId === 1) { // Crop Recommendation tile
+      loadCropRecommendation();
+    } else if (visible && selectedTileId === 2) { // Yield Prediction tile
       setShowInputForm(true);
     } else if (!visible) {
       // Reset states when modal is closed
       setLoading(false);
       setYieldData(null);
+      setCropRecommendationData(null);
       setShowInputForm(false);
       setCropInput('');
       setAreaInput('');
     }
   }, [visible, selectedTileId]);
+
+  const loadCropRecommendation = async () => {
+    console.log('Starting to load crop recommendation data...');
+    setLoading(true);
+    setCropRecommendationData(null); // Clear previous data
+    
+    try {
+      console.log('Fetching crop recommendation from API...');
+      
+      // Create a timeout promise that rejects after 5 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Server timeout - please check your internet connection'));
+        }, 5000);
+      });
+      
+      // Race between API call and timeout
+      const data = await Promise.race([
+        dataService.fetchCropRecommendation(),
+        timeoutPromise
+      ]);
+      
+      console.log('Crop recommendation received:', data);
+      setCropRecommendationData(data);
+    } catch (error) {
+      console.error('Error loading crop recommendation:', error);
+      
+      // Show error message to user
+      Alert.alert(
+        'Server Error', 
+        error.message || 'Failed to fetch crop recommendation. Please check your internet connection and try again.',
+        [
+          {
+            text: 'Try Again',
+            onPress: () => loadCropRecommendation()
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      );
+      
+      // Set fallback data
+      setCropRecommendationData({
+        crop: 'No recommendation available',
+        message: 'Unable to fetch crop recommendation. Please try again later.',
+        isApiData: false,
+        error: error.message
+      });
+    } finally {
+      console.log('Crop recommendation loading completed');
+      setLoading(false);
+    }
+  };
 
   const loadYieldData = async (crop, area) => {
     console.log('Starting to load yield prediction data...');
@@ -155,6 +214,87 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
     );
   };
 
+  const renderCropRecommendation = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1e8a3a" />
+          <Text style={styles.loadingText}>Analyzing soil conditions and location...</Text>
+          <Text style={styles.loadingSubtext}>Please wait while we get the best crop recommendation</Text>
+        </View>
+      );
+    }
+
+    if (!cropRecommendationData) {
+      return (
+        <View style={styles.detailSection}>
+          <Text style={styles.detailSectionTitle}>No Data Available</Text>
+          <Text style={styles.detailText}>Crop recommendation data is not available.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.cropRecommendationContainer}>
+        <Text style={styles.cropRecommendationTitle}>🌾 Crop Recommendation</Text>
+        
+        <View style={styles.recommendedCropCard}>
+          <Text style={styles.recommendedCropText}>{cropRecommendationData.crop}</Text>
+          <Text style={styles.recommendedCropSubtext}>Recommended Crop</Text>
+        </View>
+        
+        <View style={styles.recommendationMessage}>
+          <Text style={styles.messageText}>{cropRecommendationData.message}</Text>
+        </View>
+
+        {cropRecommendationData.isApiData && (
+          <View style={styles.recommendationDetails}>
+            <Text style={styles.detailsTitle}>Analysis Details</Text>
+            
+            {cropRecommendationData.latitude && cropRecommendationData.longitude && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>📍 Location:</Text>
+                <Text style={styles.detailValue}>
+                  {cropRecommendationData.latitude.toFixed(4)}, {cropRecommendationData.longitude.toFixed(4)}
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>🧬 Nitrogen (N):</Text>
+              <Text style={styles.detailValue}>{cropRecommendationData.N} ppm</Text>
+            </View>
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>🌿 Phosphorus (P):</Text>
+              <Text style={styles.detailValue}>{cropRecommendationData.P} ppm</Text>
+            </View>
+            
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>🌱 Potassium (K):</Text>
+              <Text style={styles.detailValue}>{cropRecommendationData.K} ppm</Text>
+            </View>
+            
+            {cropRecommendationData.lastUpdated && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>🕒 Last Updated:</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(cropRecommendationData.lastUpdated).toLocaleString()}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {!cropRecommendationData.isApiData && (
+          <View style={styles.errorIndicator}>
+            <Text style={styles.errorText}>⚠️ Offline Mode - Using cached data</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   const renderYieldPrediction = () => {
     if (loading) {
       return (
@@ -191,7 +331,6 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
             <Text style={styles.offlineText}>⚠️ Offline Mode - Using cached data</Text>
           </View>
         )}
-        <Text style={styles.yieldMessage}>{yieldData.message}</Text>
         
         {/* Basic Info */}
         <View style={styles.infoRow}>
@@ -201,10 +340,6 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>{t('yieldPrediction.area')}:</Text>
           <Text style={styles.infoValue}>{yieldData.area_ha} {t('yieldPrediction.hectares')}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>{t('yieldPrediction.temperature')}:</Text>
-          <Text style={styles.infoValue}>{yieldData.temperature_c_used}{t('yieldPrediction.degreesCelsius')}</Text>
         </View>
         {(yieldData.latitude && yieldData.longitude) && (
           <View style={styles.infoRow}>
@@ -280,7 +415,9 @@ const TileDetailsModal = ({ visible, onClose, selectedTileId }) => {
                 </View>
                 <Text style={styles.tileDetailDescription}>{t(selectedTile.descriptionKey)}</Text>
                 
-                {selectedTileId === 2 ? (
+                {selectedTileId === 1 ? (
+                  renderCropRecommendation()
+                ) : selectedTileId === 2 ? (
                   showInputForm ? renderInputForm() : renderYieldPrediction()
                 ) : (
                   <View style={styles.detailSection}>
@@ -338,7 +475,7 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     padding: 20,
-    paddingTop: 50,
+    // marginBottom: 5,
   },
   modalTitle: {
     fontSize: 24,
@@ -404,7 +541,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   yieldContainer: {
-    marginTop: 10,
+    marginBottom: 40,
   },
   yieldHeader: {
     flexDirection: 'row',
@@ -568,6 +705,97 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Crop recommendation styles
+  cropRecommendationContainer: {
+    marginTop: 10,
+  },
+  cropRecommendationTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1e8a3a',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  recommendedCropCard: {
+    backgroundColor: '#E7FFC7',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#1e8a3a',
+  },
+  recommendedCropText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1e8a3a',
+    marginBottom: 5,
+  },
+  recommendedCropSubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  recommendationMessage: {
+    backgroundColor: '#f9fafb',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1e8a3a',
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  recommendationDetails: {
+    backgroundColor: '#f9fafb',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e8a3a',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+    flex: 1,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#1e8a3a',
+    fontWeight: 'bold',
+  },
+  errorIndicator: {
+    backgroundColor: '#fef3c7',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#f59e0b',
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#92400e',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

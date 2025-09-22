@@ -99,6 +99,120 @@ class DataService {
     }
   }
 
+  async fetchCurrentSoilData() {
+    try {
+      // Get current location coordinates
+      const [latitude, longitude] = await Promise.all([
+        this.getLatitude(),
+        this.getLongitude()
+      ]);
+
+      if (!latitude || !longitude) {
+        console.log('No location data available for soil data fetch');
+        return DEFAULT_DATA.soil;
+      }
+
+      console.log('Fetching soil data for coordinates:', { latitude, longitude });
+
+      // Construct soil API URL
+      const soilApiUrl = `http://10.222.27.14:8000/soil?lat=${latitude}&lon=${longitude}`;
+      
+      console.log('Soil API URL:', soilApiUrl);
+
+      const response = await fetch(soilApiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Soil API request failed with status: ${response.status}`);
+      }
+
+      const soilData = await response.json();
+      console.log('Soil data received:', soilData);
+
+      // Extract mean values from the API response
+      const transformedSoil = this.parseSoilData(soilData);
+      
+      // Save to storage
+      await this.saveSoilData(transformedSoil);
+      
+      return transformedSoil;
+    } catch (error) {
+      console.error('Error fetching soil data:', error);
+      // Return cached data if available, otherwise default
+      const cachedSoil = await this.getSoilData();
+      return cachedSoil;
+    }
+  }
+
+  parseSoilData(apiResponse) {
+    try {
+      const layers = apiResponse.properties.layers;
+      const soilData = {
+        type: '---',
+        moisture: '---',
+        nutrients: '---',
+        phLevel: '---',
+        nitrogen: '---',
+        phosphorus: '---',
+        potassium: '---',
+        organicCarbon: '---',
+        waterContent: '---',
+        isIoT: false, // This is real-time data, not IoT
+        lastUpdated: new Date().toISOString(),
+        queryTime: apiResponse.query_time_s,
+        coordinates: apiResponse.geometry.coordinates,
+        rawData: apiResponse // Store full response for debugging
+      };
+
+      // Parse each layer to extract mean values
+      layers.forEach(layer => {
+        const meanValue = layer.depths[0].values.mean;
+        const unit = layer.unit_measure.target_units;
+        
+        switch (layer.name) {
+          case 'nitrogen':
+            soilData.nitrogen = `${(meanValue / layer.unit_measure.d_factor).toFixed(2)} ${unit}`;
+            soilData.nutrients = `${(meanValue / layer.unit_measure.d_factor).toFixed(2)} ${unit}`;
+            break;
+          case 'ocd': // Organic Carbon Density
+            soilData.organicCarbon = `${(meanValue / layer.unit_measure.d_factor).toFixed(2)} ${unit}`;
+            break;
+          case 'phh2o': // pH in water
+            soilData.phLevel = `${(meanValue / layer.unit_measure.d_factor).toFixed(1)}`;
+            break;
+          case 'wv0010': // Water content
+            soilData.waterContent = `${(meanValue / layer.unit_measure.d_factor).toFixed(2)} ${unit}`;
+            soilData.moisture = `${(meanValue / layer.unit_measure.d_factor).toFixed(2)} ${unit}`;
+            break;
+          default:
+            console.log('Unknown soil layer:', layer.name);
+        }
+      });
+
+      // Set soil type based on available data
+      if (soilData.phLevel !== '---') {
+        const ph = parseFloat(soilData.phLevel);
+        if (ph < 6.5) {
+          soilData.type = 'Acidic';
+        } else if (ph > 7.5) {
+          soilData.type = 'Alkaline';
+        } else {
+          soilData.type = 'Neutral';
+        }
+      }
+
+      console.log('Parsed soil data:', soilData);
+      return soilData;
+    } catch (error) {
+      console.error('Error parsing soil data:', error);
+      return DEFAULT_DATA.soil;
+    }
+  }
+
   async saveSoilData(soilData) {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.SOIL_DATA, JSON.stringify(soilData));
@@ -209,6 +323,87 @@ class DataService {
       console.error('Error getting crop data:', error);
       return DEFAULT_DATA.crop;
     }
+  }
+
+  async fetchCropRecommendation() {
+    try {
+      // Get current location coordinates and soil data
+      const [latitude, longitude, soilData] = await Promise.all([
+        this.getLatitude(),
+        this.getLongitude(),
+        this.getSoilData()
+      ]);
+
+      if (!latitude || !longitude) {
+        console.log('No location data available for crop recommendation');
+        return {
+          crop: 'No recommendation available',
+          message: 'Location data required for crop recommendation'
+        };
+      }
+
+      // Extract N, P, K values from soil data or use defaults
+      const N = this.extractNutrientValue(soilData.nitrogen) || 40;
+      const P = this.extractNutrientValue(soilData.phosphorus);
+      const K = this.extractNutrientValue(soilData.potassium);
+
+      console.log('Fetching crop recommendation for coordinates:', { latitude, longitude, N, P, K });
+
+      // Construct crop recommendation API URL
+      const cropApiUrl = `http://10.222.27.14:8000/recommendcrop?lat=${latitude}&lon=${longitude}&N=${N}&P=${P||50}&K=${K||50}`;
+      
+      console.log('Crop recommendation API URL:', cropApiUrl);
+
+      const response = await fetch(cropApiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Crop recommendation API request failed with status: ${response.status}`);
+      }
+
+      const cropData = await response.json();
+      console.log('Crop recommendation received:', cropData);
+
+      // Add metadata to the response
+      const enhancedCropData = {
+        ...cropData,
+        latitude,
+        longitude,
+        N,
+        P,
+        K,
+        lastUpdated: new Date().toISOString(),
+        isApiData: true
+      };
+
+      // Save to storage
+      await this.saveCropData(enhancedCropData.crop);
+      
+      return enhancedCropData;
+    } catch (error) {
+      console.error('Error fetching crop recommendation:', error);
+      // Return fallback data
+      return {
+        crop: 'No recommendation available',
+        message: 'Unable to fetch crop recommendation. Please check your internet connection.',
+        isApiData: false,
+        error: error.message
+      };
+    }
+  }
+
+  extractNutrientValue(nutrientString) {
+    if (!nutrientString || nutrientString === '---') {
+      return null;
+    }
+    
+    // Extract numeric value from strings like "1.11 g/kg" or "45 ppm"
+    const match = nutrientString.match(/(\d+\.?\d*)/);
+    return match ? parseFloat(match[1]) : null;
   }
 
   async saveCropData(cropData) {
@@ -349,11 +544,13 @@ class DataService {
     try {
       const location = await this.getCurrentLocation();
       
-      // Fetch fresh weather data from Open-Meteo API
-      const weatherData = await this.fetchCurrentWeather();
+      // Fetch fresh data from APIs
+      const [weatherData, soilData] = await Promise.all([
+        this.fetchCurrentWeather(),
+        this.fetchCurrentSoilData()
+      ]);
       
       // Get other data from storage
-      const soilData = await this.getSoilData();
       const cropData = await this.getCropData();
       
       return {

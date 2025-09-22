@@ -35,12 +35,28 @@ const MainTile = ({
         </View>
         <View style={styles.soilSection}>
           <Text style={styles.sectionTitle}>{t('mainScreen.soilData')}</Text>
-          <Text style={styles.dataText}>{t('soilData.type')}: {soilData.type}</Text>
-          <Text style={styles.dataText}>{t('soilData.moisture')}: {soilData.moisture}</Text>
-          <Text style={styles.dataText}>{t('soilData.nutrients')}: {soilData.nutrients}</Text>
+          <Text style={styles.dataText}>
+            🌱 {t('soilData.type')}: {soilData.type}
+          </Text>
+          <Text style={styles.dataText}>
+            💧 {t('soilData.moisture')}: {soilData.moisture}
+          </Text>
+          <Text style={styles.dataText}>
+            🌿 {t('soilData.nutrients')}: {soilData.nutrients}
+          </Text>
+          {soilData.phLevel && soilData.phLevel !== '---' && (
+            <Text style={styles.dataText}>
+              🧪 pH: {soilData.phLevel}
+            </Text>
+          )}
           <Text style={styles.dataSource}>
             {soilData.isIoT ? t('common.iot') : t('common.network')}
           </Text>
+          {soilData.lastUpdated && (
+            <Text style={styles.lastUpdated}>
+              {t('common.lastUpdated')}: {new Date(soilData.lastUpdated).toLocaleTimeString()}
+            </Text>
+          )}
         </View>
       </View>
       <View style={styles.mainBlockRight}>
@@ -89,7 +105,7 @@ const MainTile = ({
 
 const styles = StyleSheet.create({
   mainBlock: {
-    height: 250, // Fixed height instead of percentage
+    height: 280, // Fixed height instead of percentage
     backgroundColor: '#ffffff',
     margin: 15,
     marginTop: 40,

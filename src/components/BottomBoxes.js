@@ -27,7 +27,7 @@ const BottomBoxes = ({ onBoxPress }) => {
 
 const styles = StyleSheet.create({
   bottomBoxes: {
-    height: height * 0.075,
+    height: height * 0.08,
     flexDirection: 'row',
     paddingHorizontal: 15,
     paddingBottom: 15,
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   bottomBoxIcon: {
-    fontSize: 24,
+    fontSize: 20,
     marginBottom: 8,
   },
   bottomBoxText: {
